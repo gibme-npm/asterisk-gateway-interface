@@ -2,7 +2,8 @@
 //
 // Please see the included LICENSE file for more information.
 
-import { createServer, Server, Socket } from 'net';
+import TCPServer, { createServer } from '@gibme/tcp-server';
+import { Socket } from 'net';
 import { EventEmitter } from 'events';
 import Channel from './channel';
 export { Channel };
@@ -12,7 +13,7 @@ export { ChannelState, DialStatus, PlaybackStatus } from './types';
  * Represents an AGI server instance
  */
 export default class AsteriskGatewayInterface extends EventEmitter {
-    private readonly m_server: Server = createServer();
+    private readonly server: TCPServer = createServer();
 
     /**
      * Constructs a new instance of the object
@@ -29,13 +30,15 @@ export default class AsteriskGatewayInterface extends EventEmitter {
 
         this.setMaxListeners(maximumListeners);
 
-        this.m_server.on('connection', (socket: Socket) => {
+        this.server.on('connection', (socket: Socket) => {
             const channel = new Channel(socket);
 
             channel.on('ready', () => this.emit('channel', channel));
         });
 
-        this.m_server.on('close', () => this.emit('close'));
+        this.server.on('error', error => this.emit('error', error));
+
+        this.server.on('close', () => this.emit('close'));
     }
 
     /**
@@ -67,37 +70,13 @@ export default class AsteriskGatewayInterface extends EventEmitter {
      * Starts the AGI server
      */
     public async start (): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.m_server.once('error', error => {
-                return reject(error);
-            });
-
-            this.m_server.listen(this.port, this.ip, () => {
-                this.m_server.removeAllListeners('error');
-
-                this.m_server.on('error', error => this.emit('error', error));
-
-                return resolve();
-            });
-        });
+        return this.server.start(this.port, this.ip);
     }
 
     /**
      * Stops the AGI server
      */
     public async stop (): Promise<void> {
-        if (!this.m_server.listening) {
-            return;
-        }
-
-        return new Promise((resolve, reject) => {
-            this.m_server.close((error) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                return resolve();
-            });
-        });
+        return this.server.stop();
     }
 }

@@ -24,6 +24,11 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
+"@gibme/tcp-server@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@gibme/tcp-server/-/tcp-server-1.0.0.tgz#d493c4f4551f322d27231ab55ac378f939c01623"
+  integrity sha512-mmwsG6ZY9D3TKH2iakibKr2fr0oHlsABVJORyRVv2+ZXZfJVdyVQ0KB6if1KlmBGzNdYC5LgIwX76Zp/ugRNhw==
+
 "@gibme/timer@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@gibme/timer/-/timer-1.0.0.tgz#f3774c4d7e116b2a950a61e6020a03cbf228b49b"
