@@ -1,6 +1,22 @@
-// Copyright (c) 2016-2022 Brandon Lehmann
+// Copyright (c) 2016-2022, Brandon Lehmann <brandonlehmann@gmail.com>
 //
-// Please see the included LICENSE file for more information.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 import { Socket } from 'net';
 import { EventEmitter } from 'events';
@@ -12,31 +28,31 @@ import ResponseArguments from './response_arguments';
  * Represents an AGI Channel
  */
 export default class Channel extends EventEmitter {
-    private readonly m_connection: Socket;
-    private m_state: ContextState;
-    private m_message = '';
-    private m_network = '';
-    private m_network_script = '';
-    private m_request = '';
-    private m_channel = '';
-    private m_language = '';
-    private m_type = '';
-    private m_uniqueid = '';
-    private m_version = '';
-    private m_callerid = '';
-    private m_calleridname = '';
-    private m_callingpres = '';
-    private m_callingani2 = '';
-    private m_callington = '';
-    private m_callingtns = '';
-    private m_dnid = '';
-    private m_rdnis = '';
-    private m_context = '';
-    private m_extension = '';
-    private m_priority = '';
-    private m_enhanced = '';
-    private m_accountcode = '';
-    private m_threadid = '';
+    private readonly _connection: Socket;
+    private _state: ContextState;
+    private _message = '';
+    private _network = '';
+    private _network_script = '';
+    private _request = '';
+    private _channel = '';
+    private _language = '';
+    private _type = '';
+    private _uniqueid = '';
+    private _version = '';
+    private _callerid = '';
+    private _calleridname = '';
+    private _callingpres = '';
+    private _callingani2 = '';
+    private _callington = '';
+    private _callingtns = '';
+    private _dnid = '';
+    private _rdnis = '';
+    private _context = '';
+    private _extension = '';
+    private _priority = '';
+    private _enhanced = '';
+    private _accountcode = '';
+    private _threadid = '';
 
     /**
      * Creates a new instance of a channel object
@@ -44,15 +60,16 @@ export default class Channel extends EventEmitter {
      */
     constructor (connection: Socket) {
         super();
+
         this.setMaxListeners(10);
 
-        this.m_connection = connection;
-        this.m_state = ContextState.INIT;
+        this._connection = connection;
+        this._state = ContextState.INIT;
 
-        this.m_connection.on('data', (data) => this.read(data));
-        this.m_connection.on('close', () => this.emit('close'));
-        this.m_connection.on('error', (error) => this.emit('error', error));
-        this.m_connection.on('timeout', () => this.emit('timeout'));
+        this._connection.on('data', (data) => this.read(data));
+        this._connection.on('close', () => this.emit('close'));
+        this._connection.on('error', (error) => this.emit('error', error));
+        this._connection.on('timeout', () => this.emit('timeout'));
         this.on('hangup', () => this.close());
     }
 
@@ -120,7 +137,7 @@ export default class Channel extends EventEmitter {
      * Whether this AGI request is over the network
      */
     public get network (): boolean {
-        return (this.m_network.toLowerCase() === 'yes');
+        return (this._network.toLowerCase() === 'yes');
     }
 
     /**
@@ -129,14 +146,14 @@ export default class Channel extends EventEmitter {
      * This value would return 'test'
      */
     public get network_script (): string {
-        return this.m_network_script;
+        return this._network_script;
     }
 
     /**
      * The version of Asterisk
      */
     public get version (): string {
-        return this.m_version;
+        return this._version;
     }
 
     /**
@@ -144,133 +161,133 @@ export default class Channel extends EventEmitter {
      * ie. agi
      */
     public get request (): string {
-        return this.m_request;
+        return this._request;
     }
 
     /**
      * The originating channel (your phone)
      */
     public get channel (): string {
-        return this.m_channel;
+        return this._channel;
     }
 
     /**
      * The language code (e.g. “en”)
      */
     public get language (): string {
-        return this.m_language;
+        return this._language;
     }
 
     /**
      * The originating channel type (e.g. “SIP” or “ZAP”)
      */
     public get type (): string {
-        return this.m_type;
+        return this._type;
     }
 
     /**
      * A unique ID for the call
      */
     public get uniqueid (): string {
-        return this.m_uniqueid;
+        return this._uniqueid;
     }
 
     /**
      * The caller ID number (or “unknown”)
      */
     public get callerid (): string {
-        return this.m_callerid;
+        return this._callerid;
     }
 
     /**
      * The caller ID name (or “unknown”)
      */
     public get calleridname (): string {
-        return this.m_calleridname;
+        return this._calleridname;
     }
 
     /**
      * The presentation for the callerid in a ZAP channel
      */
     public get callingpres (): string {
-        return this.m_callingpres;
+        return this._callingpres;
     }
 
     /**
      * The number which is defined in ANI2 see Asterisk Detailed Variable List (only for PRI Channels)
      */
     public get callingani2 (): string {
-        return this.m_callingani2;
+        return this._callingani2;
     }
 
     /**
      *  The type of number used in PRI Channels see Asterisk Detailed Variable List
      */
     public get callington (): string {
-        return this.m_callington;
+        return this._callington;
     }
 
     /**
      * An optional 4 digit number (Transit Network Selector) used in PRI Channels see Asterisk Detailed Variable List
      */
     public get callingtns (): string {
-        return this.m_callingtns;
+        return this._callingtns;
     }
 
     /**
      * The dialed number id (or “unknown”)
      */
     public get dnid (): string {
-        return this.m_dnid;
+        return this._dnid;
     }
 
     /**
      * The referring DNIS number (or “unknown”)
      */
     public get rdnis (): string {
-        return this.m_rdnis;
+        return this._rdnis;
     }
 
     /**
      * Origin context in extensions.conf
      */
     public get context (): string {
-        return this.m_context;
+        return this._context;
     }
 
     /**
      * The called number
      */
     public get extension (): string {
-        return this.m_extension;
+        return this._extension;
     }
 
     /**
      * The priority it was executed as in the dial plan
      */
     public get priority (): string {
-        return this.m_priority;
+        return this._priority;
     }
 
     /**
      * The flag value is 1.0 if started as an EAGI script, 0.0 otherwise
      */
     public get enhanced (): string {
-        return this.m_enhanced;
+        return this._enhanced;
     }
 
     /**
      * Account code of the origin channel
      */
     public get accountcode (): string {
-        return this.m_accountcode;
+        return this._accountcode;
     }
 
     /**
      * Thread ID of the AGI script
      */
     public get threadid (): string {
-        return this.m_threadid;
+        return this._threadid;
     }
 
     /**
@@ -1219,106 +1236,130 @@ export default class Channel extends EventEmitter {
 
     /* Internal Methods */
 
+    /**
+     * Closes the connection
+     *
+     * @private
+     */
     private close () {
-        this.m_connection.destroy();
+        this._connection.destroy();
     }
 
+    /**
+     * Reads data from the socket
+     *
+     * @param data
+     * @private
+     */
     private read (data: Buffer): void {
         if (data.length === 0) {
             return;
         }
 
-        this.m_message += data.toString();
+        this._message += data.toString();
 
-        if (this.m_state === ContextState.INIT) {
-            if (this.m_message.indexOf('\n\n') === -1) {
+        if (this._state === ContextState.INIT) {
+            if (this._message.indexOf('\n\n') === -1) {
                 return;
             }
 
-            this.readVariables(this.m_message);
-        } else if (this.m_state === ContextState.WAITING) {
-            if (this.m_message.indexOf('\n') === -1) {
+            this.readVariables(this._message);
+        } else if (this._state === ContextState.WAITING) {
+            if (this._message.indexOf('\n') === -1) {
                 return;
             }
 
-            this.readResponse(this.m_message);
+            this.readResponse(this._message);
         }
 
-        this.m_message = '';
+        this._message = '';
     }
 
+    /**
+     * Parses variables
+     *
+     * @param id
+     * @param value
+     * @private
+     */
     private handleVariable (id: string, value: string) {
         switch (id) {
             case 'network':
-                this.m_network = value;
+                this._network = value;
                 break;
             case 'network_script':
-                this.m_network_script = value;
+                this._network_script = value;
                 break;
             case 'request':
-                this.m_request = value;
+                this._request = value;
                 break;
             case 'channel':
-                this.m_channel = value;
+                this._channel = value;
                 break;
             case 'language':
-                this.m_language = value;
+                this._language = value;
                 break;
             case 'type':
-                this.m_type = value;
+                this._type = value;
                 break;
             case 'uniqueid':
-                this.m_uniqueid = value;
+                this._uniqueid = value;
                 break;
             case 'version':
-                this.m_version = value;
+                this._version = value;
                 break;
             case 'callerid':
-                this.m_callerid = value;
+                this._callerid = value;
                 break;
             case 'calleridname':
-                this.m_calleridname = value;
+                this._calleridname = value;
                 break;
             case 'callingpres':
-                this.m_callingpres = value;
+                this._callingpres = value;
                 break;
             case 'callingani2':
-                this.m_callingani2 = value;
+                this._callingani2 = value;
                 break;
             case 'callington':
-                this.m_callington = value;
+                this._callington = value;
                 break;
             case 'callingtns':
-                this.m_callingtns = value;
+                this._callingtns = value;
                 break;
             case 'dnid':
-                this.m_dnid = value;
+                this._dnid = value;
                 break;
             case 'rdnis':
-                this.m_rdnis = value;
+                this._rdnis = value;
                 break;
             case 'context':
-                this.m_context = value;
+                this._context = value;
                 break;
             case 'extension':
-                this.m_extension = value;
+                this._extension = value;
                 break;
             case 'priority':
-                this.m_priority = value;
+                this._priority = value;
                 break;
             case 'enhanced':
-                this.m_enhanced = value;
+                this._enhanced = value;
                 break;
             case 'accountcode':
-                this.m_accountcode = value;
+                this._accountcode = value;
                 break;
             case 'threadid':
-                this.m_threadid = value;
+                this._threadid = value;
                 break;
             default:
         }
     }
 
+    /**
+     * Reads variables
+     *
+     * @param message
+     * @private
+     */
     private readVariables (message: string) {
         message.split('\n')
             .forEach(line => {
@@ -1331,17 +1372,29 @@ export default class Channel extends EventEmitter {
                 this.handleVariable(id, value);
             });
 
-        this.m_state = ContextState.WAITING;
+        this._state = ContextState.WAITING;
 
         this.emit('ready');
     }
 
+    /**
+     * Reads a response
+     *
+     * @param message
+     * @private
+     */
     private readResponse (message: string) {
         const lines = message.split('\n');
 
         lines.map((line) => this.readResponseLine(line));
     }
 
+    /**
+     * Reads a response line
+     *
+     * @param line
+     * @private
+     */
     private readResponseLine (line: string) {
         if (!line) {
             return;
@@ -1383,18 +1436,32 @@ export default class Channel extends EventEmitter {
         this.emit('response', response);
     }
 
+    /**
+     * Writes data to the socket
+     *
+     * @param message
+     * @private
+     */
     private async send (message: string): Promise<void> {
         return new Promise((resolve, reject) => {
             this.emit('send', message);
-            this.m_connection.write(message, (error) => {
+
+            this._connection.write(message, (error) => {
                 if (error) {
                     return reject(error);
                 }
+
                 return resolve();
             });
         });
     }
 
+    /**
+     * Sends a command to the socket and awaits the response
+     *
+     * @param command
+     * @private
+     */
     private async sendCommand (command: string): Promise<IResponse> {
         return new Promise((resolve, reject) => {
             const handleResponse = (response: IResponse) => {

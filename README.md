@@ -1,4 +1,10 @@
-# Simple [Asterisk Gateway Interface](https://wiki.asterisk.org/wiki/pages/viewpage.action?pageId=32375589) Helper
+# [Asterisk Gateway Interface](https://wiki.asterisk.org/wiki/pages/viewpage.action?pageId=32375589) Server
+
+## Documentation
+
+[https://gibme-npm.github.io/asterisk-gateway-interface/](https://gibme-npm.github.io/asterisk-gateway-interface/)
+
+## Sample Code
 
 ```typescript
 import AGI, { Channel } from '@gibme/asterisk-gateway-interface';

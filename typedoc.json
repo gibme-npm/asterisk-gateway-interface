@@ -1,0 +1,11 @@
+{
+  "out": "./docs",
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "entryPoints": [
+    "./src/asterisk-gateway-interface.ts"
+  ],
+  "disableSources": true,
+  "hideGenerator": true,
+  "githubPages": true
+}
