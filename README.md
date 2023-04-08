@@ -10,7 +10,7 @@
 import AGI, { Channel } from '@gibme/asterisk-gateway-interface';
 
 (async () => {
-    const agi = new AMI({
+    const agi = new AGI({
         port: 3000
     });
     

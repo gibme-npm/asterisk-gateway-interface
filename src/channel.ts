@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Socket } from 'net';
+import { Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
 import { format } from 'util';
 import { IResponse, ContextState, DialStatus, PlaybackStatus, ChannelState } from './types';

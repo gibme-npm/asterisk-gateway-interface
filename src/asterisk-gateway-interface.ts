@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import TCPServer, { createServer } from '@gibme/tcp-server';
-import { Socket } from 'net';
+import TCPServer, { createServer, Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
 import Channel from './channel';
 export { Channel };
