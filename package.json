@@ -1,6 +1,6 @@
 {
   "name": "@gibme/asterisk-gateway-interface",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Asterisk Gateway Interface Server",
   "main": "dist/asterisk-gateway-interface.js",
   "types": "dist/asterisk-gateway-interface.d.ts",
@@ -47,8 +47,8 @@
   "devDependencies": {
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.4.8",
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
-    "@typescript-eslint/parser": "^6.2.1",
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
     "eslint": "^8.46.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.28.0",
