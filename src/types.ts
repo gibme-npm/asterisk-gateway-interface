@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import ResponseArguments from './response_arguments';
+
 export { ResponseArguments };
 export { IResponseArguments } from './response_arguments';
 

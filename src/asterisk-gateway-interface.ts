@@ -21,6 +21,7 @@
 import TCPServer, { createServer, Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
 import Channel from './channel';
+
 export { Channel };
 export {
     ChannelState,

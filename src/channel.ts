@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2022, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2016-2023, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 import { Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
 import { format } from 'util';
-import { IResponse, ContextState, DialStatus, PlaybackStatus, ChannelState } from './types';
+import { ChannelState, ContextState, DialStatus, IResponse, PlaybackStatus } from './types';
 import ResponseArguments from './response_arguments';
 
 /**
@@ -31,28 +31,7 @@ export default class Channel extends EventEmitter {
     private readonly _connection: Socket;
     private _state: ContextState;
     private _message = '';
-    private _network = '';
-    private _network_script = '';
-    private _request = '';
-    private _channel = '';
-    private _language = '';
-    private _type = '';
-    private _uniqueid = '';
-    private _version = '';
-    private _callerid = '';
-    private _calleridname = '';
-    private _callingpres = '';
-    private _callingani2 = '';
-    private _callington = '';
-    private _callingtns = '';
-    private _dnid = '';
-    private _rdnis = '';
-    private _context = '';
-    private _extension = '';
-    private _priority = '';
-    private _enhanced = '';
-    private _accountcode = '';
-    private _threadid = '';
+    private _closeOnHangup = true;
 
     /**
      * Creates a new instance of a channel object
@@ -70,7 +49,231 @@ export default class Channel extends EventEmitter {
         this._connection.on('close', () => this.emit('close'));
         this._connection.on('error', (error) => this.emit('error', error));
         this._connection.on('timeout', () => this.emit('timeout'));
-        this.on('hangup', () => this.close());
+        this.on('hangup', () => {
+            if (this._closeOnHangup) {
+                // we need to pause a moment in case we had dialed out somewhere
+                // by waiting a quick moment, we can ensure that we receive the DIALSTATUS
+                // back in those cases
+                setTimeout(() => this.close(), 250);
+            }
+        });
+    }
+
+    private _network = '';
+
+    /**
+     * Whether this AGI request is over the network
+     */
+    public get network (): boolean {
+        return (this._network.toLowerCase() === 'yes');
+    }
+
+    private _network_script = '';
+
+    /**
+     * The network path included in the AGI request
+     * ie. agi://127.0.0.1:3000/test
+     * This value would return 'test'
+     */
+    public get network_script (): string {
+        return this._network_script;
+    }
+
+    private _request = '';
+
+    /**
+     * The filename of your script
+     * ie. agi
+     */
+    public get request (): string {
+        return this._request;
+    }
+
+    private _channel = '';
+
+    /**
+     * The originating channel (your phone)
+     */
+    public get channel (): string {
+        return this._channel;
+    }
+
+    private _language = '';
+
+    /**
+     * The language code (e.g. “en”)
+     */
+    public get language (): string {
+        return this._language;
+    }
+
+    private _type = '';
+
+    /**
+     * The originating channel type (e.g. “SIP” or “ZAP”)
+     */
+    public get type (): string {
+        return this._type;
+    }
+
+    private _uniqueid = '';
+
+    /**
+     * A unique ID for the call
+     */
+    public get uniqueid (): string {
+        return this._uniqueid;
+    }
+
+    private _version = '';
+
+    /**
+     * The version of Asterisk
+     */
+    public get version (): string {
+        return this._version;
+    }
+
+    private _callerid = '';
+
+    /**
+     * The caller ID number (or “unknown”)
+     */
+    public get callerid (): string {
+        return this._callerid;
+    }
+
+    private _calleridname = '';
+
+    /**
+     * The caller ID name (or “unknown”)
+     */
+    public get calleridname (): string {
+        return this._calleridname;
+    }
+
+    private _callingpres = '';
+
+    /**
+     * The presentation for the callerid in a ZAP channel
+     */
+    public get callingpres (): string {
+        return this._callingpres;
+    }
+
+    private _callingani2 = '';
+
+    /**
+     * The number which is defined in ANI2 see Asterisk Detailed Variable List (only for PRI Channels)
+     */
+    public get callingani2 (): string {
+        return this._callingani2;
+    }
+
+    private _callington = '';
+
+    /**
+     *  The type of number used in PRI Channels see Asterisk Detailed Variable List
+     */
+    public get callington (): string {
+        return this._callington;
+    }
+
+    private _callingtns = '';
+
+    /**
+     * An optional 4 digit number (Transit Network Selector) used in PRI Channels see Asterisk Detailed Variable List
+     */
+    public get callingtns (): string {
+        return this._callingtns;
+    }
+
+    private _dnid = '';
+
+    /**
+     * The dialed number id (or “unknown”)
+     */
+    public get dnid (): string {
+        return this._dnid;
+    }
+
+    private _rdnis = '';
+
+    /**
+     * The referring DNIS number (or “unknown”)
+     */
+    public get rdnis (): string {
+        return this._rdnis;
+    }
+
+    private _context = '';
+
+    /**
+     * Origin context in extensions.conf
+     */
+    public get context (): string {
+        return this._context;
+    }
+
+    private _extension = '';
+
+    /**
+     * The called number
+     */
+    public get extension (): string {
+        return this._extension;
+    }
+
+    private _priority = '';
+
+    /**
+     * The priority it was executed as in the dial plan
+     */
+    public get priority (): string {
+        return this._priority;
+    }
+
+    private _enhanced = '';
+
+    /**
+     * The flag value is 1.0 if started as an EAGI script, 0.0 otherwise
+     */
+    public get enhanced (): string {
+        return this._enhanced;
+    }
+
+    private _accountcode = '';
+
+    /**
+     * Account code of the origin channel
+     */
+    public get accountcode (): string {
+        return this._accountcode;
+    }
+
+    private _threadid = '';
+
+    /**
+     * Thread ID of the AGI script
+     */
+    public get threadid (): string {
+        return this._threadid;
+    }
+
+    /**
+     * Gets the value of the close on hangup setting
+     */
+    public get autoCloseOnHangup (): boolean {
+        return this._closeOnHangup;
+    }
+
+    /**
+     * Gets the value of the close on hangup setting
+     *
+     * @param value
+     */
+    public set autoCloseOnHangup (value: boolean) {
+        this._closeOnHangup = value;
     }
 
     /**
@@ -134,163 +337,6 @@ export default class Channel extends EventEmitter {
     }
 
     /**
-     * Whether this AGI request is over the network
-     */
-    public get network (): boolean {
-        return (this._network.toLowerCase() === 'yes');
-    }
-
-    /**
-     * The network path included in the AGI request
-     * ie. agi://127.0.0.1:3000/test
-     * This value would return 'test'
-     */
-    public get network_script (): string {
-        return this._network_script;
-    }
-
-    /**
-     * The version of Asterisk
-     */
-    public get version (): string {
-        return this._version;
-    }
-
-    /**
-     * The filename of your script
-     * ie. agi
-     */
-    public get request (): string {
-        return this._request;
-    }
-
-    /**
-     * The originating channel (your phone)
-     */
-    public get channel (): string {
-        return this._channel;
-    }
-
-    /**
-     * The language code (e.g. “en”)
-     */
-    public get language (): string {
-        return this._language;
-    }
-
-    /**
-     * The originating channel type (e.g. “SIP” or “ZAP”)
-     */
-    public get type (): string {
-        return this._type;
-    }
-
-    /**
-     * A unique ID for the call
-     */
-    public get uniqueid (): string {
-        return this._uniqueid;
-    }
-
-    /**
-     * The caller ID number (or “unknown”)
-     */
-    public get callerid (): string {
-        return this._callerid;
-    }
-
-    /**
-     * The caller ID name (or “unknown”)
-     */
-    public get calleridname (): string {
-        return this._calleridname;
-    }
-
-    /**
-     * The presentation for the callerid in a ZAP channel
-     */
-    public get callingpres (): string {
-        return this._callingpres;
-    }
-
-    /**
-     * The number which is defined in ANI2 see Asterisk Detailed Variable List (only for PRI Channels)
-     */
-    public get callingani2 (): string {
-        return this._callingani2;
-    }
-
-    /**
-     *  The type of number used in PRI Channels see Asterisk Detailed Variable List
-     */
-    public get callington (): string {
-        return this._callington;
-    }
-
-    /**
-     * An optional 4 digit number (Transit Network Selector) used in PRI Channels see Asterisk Detailed Variable List
-     */
-    public get callingtns (): string {
-        return this._callingtns;
-    }
-
-    /**
-     * The dialed number id (or “unknown”)
-     */
-    public get dnid (): string {
-        return this._dnid;
-    }
-
-    /**
-     * The referring DNIS number (or “unknown”)
-     */
-    public get rdnis (): string {
-        return this._rdnis;
-    }
-
-    /**
-     * Origin context in extensions.conf
-     */
-    public get context (): string {
-        return this._context;
-    }
-
-    /**
-     * The called number
-     */
-    public get extension (): string {
-        return this._extension;
-    }
-
-    /**
-     * The priority it was executed as in the dial plan
-     */
-    public get priority (): string {
-        return this._priority;
-    }
-
-    /**
-     * The flag value is 1.0 if started as an EAGI script, 0.0 otherwise
-     */
-    public get enhanced (): string {
-        return this._enhanced;
-    }
-
-    /**
-     * Account code of the origin channel
-     */
-    public get accountcode (): string {
-        return this._accountcode;
-    }
-
-    /**
-     * Thread ID of the AGI script
-     */
-    public get threadid (): string {
-        return this._threadid;
-    }
-
-    /**
      * Answers channel if not already in answer state.
      */
     public async answer (): Promise<void> {
@@ -349,7 +395,7 @@ export default class Channel extends EventEmitter {
         fastForwardCharacter?: string,
         rewindCharacter?: string,
         pauseCharacter?: string
-    ): Promise<{digit: string, playbackStatus: PlaybackStatus, playbackOffset: number}> {
+    ): Promise<{ digit: string, playbackStatus: PlaybackStatus, playbackOffset: number }> {
         const response = await this.sendCommand(format('CONTROL STREAM FILE %s "%s" %s %s %s %s',
             filename,
             escapeDigits,
@@ -391,41 +437,60 @@ export default class Channel extends EventEmitter {
     /**
      * Attempts to establish a new outgoing connection on a channel, and then link it to the calling input channel.
      * @param target
-     * @param timeout
-     * @param params
+     * @param options
+     * @returns [DialStatus, DialedTime, AnsweredTime]
      */
     public async dial (
         target: string,
-        timeout = 30,
-        params?: string
-    ): Promise<DialStatus> {
+        options: Partial<{
+            timeout: number;
+            params: string;
+            hangupOnComplete: boolean;
+        }> = {}
+    ): Promise<[DialStatus, number, number]> {
+        options.timeout ??= 30;
+        options.params ??= '';
+        options.hangupOnComplete ??= true;
+
+        // This is HARD blocking as the program flow will not continue until either
+        // (a) the call fails; or (b) the call is hung up
         await this.exec('Dial', format('%s,%s,%s',
             target,
-            timeout,
-            params || ''
+            options.timeout,
+            options.params
         ));
 
         const dialstatus = await this.getVariable('DIALSTATUS');
 
+        const dialedtime = parseInt(await this.getVariable('DIALEDTIME') || '0') || 0;
+        const answeredtime = parseInt(await this.getVariable('ANSWEREDTIME') || '0') || 0;
+
+        if (options.hangupOnComplete) {
+            try {
+                await this.hangup();
+            } catch {
+            }
+        }
+
         switch (dialstatus.toUpperCase()) {
             case 'ANSWER':
-                return DialStatus.ANSWER;
+                return [DialStatus.ANSWER, dialedtime, answeredtime];
             case 'BUSY':
-                return DialStatus.BUSY;
+                return [DialStatus.BUSY, dialedtime, answeredtime];
             case 'NOANSWER':
-                return DialStatus.NOANSWER;
+                return [DialStatus.NOANSWER, dialedtime, answeredtime];
             case 'CANCEL':
-                return DialStatus.CANCEL;
+                return [DialStatus.CANCEL, dialedtime, answeredtime];
             case 'CONGESTION':
-                return DialStatus.CONGESTION;
+                return [DialStatus.CONGESTION, dialedtime, answeredtime];
             case 'CHANUNAVAIL':
-                return DialStatus.CHANUNAVAIL;
+                return [DialStatus.CHANUNAVAIL, dialedtime, answeredtime];
             case 'DONTCALL':
-                return DialStatus.DONTCALL;
+                return [DialStatus.DONTCALL, dialedtime, answeredtime];
             case 'TORTURE':
-                return DialStatus.TORTURE;
+                return [DialStatus.TORTURE, dialedtime, answeredtime];
             case 'INVALIDARGS':
-                return DialStatus.INVALIDARGS;
+                return [DialStatus.INVALIDARGS, dialedtime, answeredtime];
             default:
                 throw new Error('Unknown dial status');
         }
