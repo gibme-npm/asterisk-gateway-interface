@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2022, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2016-2024, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ export default class AsteriskGatewayInterface extends EventEmitter {
     }
 
     /**
-     * Event that is emitted when a new AGI channel has been established and is ready for interation
+     * Event that is emitted when a new AGI channel has been established and is ready for interaction
      * @param event
      * @param listener
      */
