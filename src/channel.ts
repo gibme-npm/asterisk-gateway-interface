@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2023, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2016-2024, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,6 @@
 
 import { Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
-import { format } from 'util';
 import { ChannelState, ContextState, DialStatus, IResponse, PlaybackStatus } from './types';
 import ResponseArguments from './response_arguments';
 
@@ -182,7 +181,7 @@ export default class Channel extends EventEmitter {
     private _callingtns = '';
 
     /**
-     * An optional 4 digit number (Transit Network Selector) used in PRI Channels see Asterisk Detailed Variable List
+     * An optional 4-digit number (Transit Network Selector) used in PRI Channels see Asterisk Detailed Variable List
      */
     public get callingtns (): string {
         return this._callingtns;
@@ -277,6 +276,13 @@ export default class Channel extends EventEmitter {
     }
 
     /**
+     * Gets the IP address of the Asterisk Server that initiated the channel
+     */
+    public get remoteIP (): string {
+        return this._connection.remoteAddress ?? '127.0.0.1';
+    }
+
+    /**
      * Event that is emitted when the underlying socket encounters an error
      * @param event
      * @param listener
@@ -368,9 +374,7 @@ export default class Channel extends EventEmitter {
     public async channelStatus (
         channel?: string
     ): Promise<ChannelState> {
-        const response = await this.sendCommand(format('CHANNEL STATUS %s',
-            channel || ''
-        ));
+        const response = await this.sendCommand(`CHANNEL STATUS ${channel ?? ''}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not get channel status');
@@ -396,14 +400,10 @@ export default class Channel extends EventEmitter {
         rewindCharacter?: string,
         pauseCharacter?: string
     ): Promise<{ digit: string, playbackStatus: PlaybackStatus, playbackOffset: number }> {
-        const response = await this.sendCommand(format('CONTROL STREAM FILE %s "%s" %s %s %s %s',
-            filename,
-            escapeDigits,
-            skipms || '',
-            fastForwardCharacter || '',
-            rewindCharacter || '',
-            pauseCharacter || ''
-        ));
+        const response = await this.sendCommand(
+            `CONTROL STREAM FILE ${filename} ` +
+            `"${escapeDigits}" ${skipms ?? ''} ${fastForwardCharacter ?? ''} ` +
+            `${rewindCharacter ?? ''} ${pauseCharacter ?? ''}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not control stream file');
@@ -438,7 +438,7 @@ export default class Channel extends EventEmitter {
      * Attempts to establish a new outgoing connection on a channel, and then link it to the calling input channel.
      * @param target
      * @param options
-     * @returns [DialStatus, DialedTime, AnsweredTime]
+     * @returns
      */
     public async dial (
         target: string,
@@ -447,23 +447,24 @@ export default class Channel extends EventEmitter {
             params: string;
             hangupOnComplete: boolean;
         }> = {}
-    ): Promise<[DialStatus, number, number]> {
+    ): Promise<{
+        status: DialStatus;
+        dialed_time: number;
+        answered_time: number;
+    }> {
         options.timeout ??= 30;
         options.params ??= '';
         options.hangupOnComplete ??= true;
 
         // This is HARD blocking as the program flow will not continue until either
         // (a) the call fails; or (b) the call is hung up
-        await this.exec('Dial', format('%s,%s,%s',
-            target,
-            options.timeout,
-            options.params
-        ));
+        await this.exec('Dial', `${target},${options.timeout},${options.params}`);
 
         const dialstatus = await this.getVariable('DIALSTATUS');
 
-        const dialedtime = parseInt(await this.getVariable('DIALEDTIME') || '0') || 0;
-        const answeredtime = parseInt(await this.getVariable('ANSWEREDTIME') || '0') || 0;
+        const dialed_time = parseInt(await this.getVariable('DIALEDTIME') || '0') || 0;
+
+        const answered_time = parseInt(await this.getVariable('ANSWEREDTIME') || '0') || 0;
 
         if (options.hangupOnComplete) {
             try {
@@ -472,28 +473,43 @@ export default class Channel extends EventEmitter {
             }
         }
 
+        let status: DialStatus = DialStatus.UNKNOWN;
+
         switch (dialstatus.toUpperCase()) {
             case 'ANSWER':
-                return [DialStatus.ANSWER, dialedtime, answeredtime];
+                status = DialStatus.ANSWER;
+                break;
             case 'BUSY':
-                return [DialStatus.BUSY, dialedtime, answeredtime];
+                status = DialStatus.BUSY;
+                break;
             case 'NOANSWER':
-                return [DialStatus.NOANSWER, dialedtime, answeredtime];
+                status = DialStatus.NOANSWER;
+                break;
             case 'CANCEL':
-                return [DialStatus.CANCEL, dialedtime, answeredtime];
+                status = DialStatus.CANCEL;
+                break;
             case 'CONGESTION':
-                return [DialStatus.CONGESTION, dialedtime, answeredtime];
+                status = DialStatus.CONGESTION;
+                break;
             case 'CHANUNAVAIL':
-                return [DialStatus.CHANUNAVAIL, dialedtime, answeredtime];
+                status = DialStatus.CHANUNAVAIL;
+                break;
             case 'DONTCALL':
-                return [DialStatus.DONTCALL, dialedtime, answeredtime];
+                status = DialStatus.DONTCALL;
+                break;
             case 'TORTURE':
-                return [DialStatus.TORTURE, dialedtime, answeredtime];
+                status = DialStatus.TORTURE;
+                break;
             case 'INVALIDARGS':
-                return [DialStatus.INVALIDARGS, dialedtime, answeredtime];
-            default:
-                throw new Error('Unknown dial status');
+                status = DialStatus.INVALIDARGS;
+                break;
         }
+
+        return {
+            status,
+            dialed_time,
+            answered_time
+        };
     }
 
     /**
@@ -505,10 +521,7 @@ export default class Channel extends EventEmitter {
         family: string,
         key: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('DATABASE DEL %s %s',
-            family,
-            key
-        ));
+        const response = await this.sendCommand(`DATABASE DEL ${family} ${key}`);
 
         if (response.code !== 200 || response.result === 0) {
             throw new Error('Could not delete from the database');
@@ -524,9 +537,7 @@ export default class Channel extends EventEmitter {
         family: string,
         keyTree?: string
     ): Promise<boolean> {
-        const response = await this.sendCommand(format('DATABASE DELTREE %s %s',
-            family,
-            keyTree || ''));
+        const response = await this.sendCommand(`DATABASE DELTREE ${family} ${keyTree ?? ''}`);
 
         if (response.code !== 200) {
             throw new Error('Could not delete tree from database');
@@ -544,10 +555,7 @@ export default class Channel extends EventEmitter {
         family: string,
         key: string
     ): Promise<string> {
-        const response = await this.sendCommand(format('DATABASE GET %s %s',
-            family,
-            key
-        ));
+        const response = await this.sendCommand(`DATABASE GET ${family} ${key}`);
 
         if (response.code !== 200 || response.result === 0) {
             throw new Error('Database key not set');
@@ -567,11 +575,7 @@ export default class Channel extends EventEmitter {
         key: string,
         value: string
     ): Promise<string> {
-        const response = await this.sendCommand(format('DATABASE PUT %s %s %s',
-            family,
-            key,
-            value
-        ));
+        const response = await this.sendCommand(`DATABASE PUT ${family} ${key} ${value}`);
 
         if (response.code !== 200 || response.result === 0) {
             throw new Error('Database key not set');
@@ -589,7 +593,15 @@ export default class Channel extends EventEmitter {
         application: string,
         ...args: string[]
     ): Promise<number> {
-        const response = await this.sendCommand(format('EXEC %s %s', application, args.join(' ')));
+        args = args.map(arg => {
+            if (arg.includes(' ')) {
+                arg = `"${arg}"`;
+            }
+
+            return arg;
+        });
+
+        const response = await this.sendCommand(`EXEC ${application} ${args.join(' ')}`);
 
         if (response.code !== 200 || response.result === -2) {
             throw new Error('Could not execute application');
@@ -609,11 +621,7 @@ export default class Channel extends EventEmitter {
         timeout = 5,
         maxDigits?: number
     ): Promise<{ digits: string, timeout: boolean }> {
-        const response = await this.sendCommand(format('GET DATA %s %s %s',
-            soundFile,
-            timeout * 1000,
-            maxDigits || ''
-        ));
+        const response = await this.sendCommand(`GET DATA ${soundFile} ${timeout * 1000} ${maxDigits ?? ''}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not get data from channel');
@@ -635,10 +643,7 @@ export default class Channel extends EventEmitter {
         key: string,
         channel?: string
     ): Promise<string> {
-        const response = await this.sendCommand(format('GET FULL VARIABLE %s %s',
-            key.toUpperCase(),
-            channel || ''
-        ));
+        const response = await this.sendCommand(`GET FULL VARIABLE ${key.toUpperCase()} ${channel ?? ''}`);
 
         if (response.code !== 200 || response.result === 0) {
             throw new Error('Variable not set');
@@ -659,11 +664,7 @@ export default class Channel extends EventEmitter {
         escapeDigits = '#',
         timeout = 5
     ): Promise<{ digit: string, endpos: number }> {
-        const response = await this.sendCommand(format('GET OPTION %s "%s" %s',
-            soundFile,
-            escapeDigits,
-            timeout * 1000
-        ));
+        const response = await this.sendCommand(`GET OPTION ${soundFile} "${escapeDigits}" ${timeout * 1000}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not get option');
@@ -686,9 +687,7 @@ export default class Channel extends EventEmitter {
     public async getVariable (
         key: string
     ): Promise<string> {
-        const response = await this.sendCommand(format('GET VARIABLE %s',
-            key.toUpperCase()
-        ));
+        const response = await this.sendCommand(`GET VARIABLE ${key.toUpperCase()}`);
 
         if (response.code !== 200 || response.result === 0) {
             throw new Error('Variable not set');
@@ -710,12 +709,8 @@ export default class Channel extends EventEmitter {
         priority: number,
         argument?: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('GOSUB %s %s %s %s',
-            context,
-            extension,
-            priority,
-            argument || ''
-        ));
+        const response = await this.sendCommand(
+            `GOSUB ${context} ${extension} ${priority} ${argument ?? ''}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not execute gosub');
@@ -729,9 +724,7 @@ export default class Channel extends EventEmitter {
     public async hangup (
         channel?: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('HANGUP %s',
-            channel || ''
-        ));
+        const response = await this.sendCommand(`HANGUP ${channel ?? ''}`);
 
         if (response.code !== 200 || response.result !== 1) {
             throw new Error('Could not hang up call');
@@ -756,9 +749,7 @@ export default class Channel extends EventEmitter {
     public async receiveChar (
         timeout = 5
     ): Promise<{ char: string, timeout: boolean }> {
-        const response = await this.sendCommand(format('RECEIVE CHAR %s',
-            timeout * 1000
-        ));
+        const response = await this.sendCommand(`RECEIVE CHAR ${timeout * 1000}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not get data from channel');
@@ -777,9 +768,7 @@ export default class Channel extends EventEmitter {
     public async receiveText (
         timeout = 5
     ): Promise<string> {
-        const response = await this.sendCommand(format('RECEIVE TEXT %s',
-            timeout * 1000
-        ));
+        const response = await this.sendCommand(`RECEIVE TEXT ${timeout * 1000}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not get data from channel');
@@ -807,15 +796,10 @@ export default class Channel extends EventEmitter {
         silence?: number,
         offsetSamples?: number
     ): Promise<{ digit: string, endpos: number, timeout: boolean }> {
-        const response = await this.sendCommand(format('RECORD FILE %s %s "%s" %s %s %s %s',
-            filename,
-            fileFormat,
-            escapeDigits,
-            timeout * 1000,
-            offsetSamples || '',
-            (beep) ? 'BEEP' : '',
-            (silence) ? format('s=%s', silence) : ''
-        ));
+        const response = await this.sendCommand(
+            `RECORD FILE ${filename} ${fileFormat} "${escapeDigits}"` +
+            `${timeout * 1000} ${offsetSamples ?? ''} ${beep ? 'BEEP' : ''}` +
+            `${silence ? `s=${silence}` : ''}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not record file');
@@ -837,10 +821,7 @@ export default class Channel extends EventEmitter {
         value: string,
         escapeDigits = '#'
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY ALPHA %s "%s"',
-            value,
-            escapeDigits
-        ));
+        const response = await this.sendCommand(`SAY ALPHA ${value} "${escapeDigits}"`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say alpha');
@@ -858,10 +839,12 @@ export default class Channel extends EventEmitter {
         value: Date | number,
         escapeDigits = '#'
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY DATE %s "%s"',
-            (typeof value === 'number') ? value : Math.floor(value.getTime() / 1000),
-            escapeDigits
-        ));
+        if (typeof value !== 'number') {
+            value = Math.floor(value.getTime() / 1000);
+        }
+
+        const response = await this.sendCommand(
+            `SAY DATE ${value} "${escapeDigits}"`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say date');
@@ -883,12 +866,12 @@ export default class Channel extends EventEmitter {
         dateFormat?: string,
         timezone?: string
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY DATETIME %s "%s" %s %s',
-            (typeof value === 'number') ? value : Math.floor(value.getTime() / 1000),
-            escapeDigits,
-            dateFormat || '',
-            timezone || ''
-        ));
+        if (typeof value !== 'number') {
+            value = Math.floor(value.getTime() / 1000);
+        }
+
+        const response = await this.sendCommand(
+            `SAY DATETIME ${value} "${escapeDigits}" ${dateFormat ?? ''} ${timezone ?? ''}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say date time');
@@ -906,10 +889,8 @@ export default class Channel extends EventEmitter {
         value: string,
         escapeDigits = '#'
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY DIGITS %s "%s"',
-            value,
-            escapeDigits
-        ));
+        const response = await this.sendCommand(
+            `SAY DIGITS ${value} "${escapeDigits}"`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say digits');
@@ -927,10 +908,8 @@ export default class Channel extends EventEmitter {
         value: number,
         escapeDigits = '#'
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY NUMBER %s "%s"',
-            value,
-            escapeDigits
-        ));
+        const response = await this.sendCommand(
+            `SAY NUMBER ${value} "${escapeDigits}"`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say number');
@@ -948,10 +927,8 @@ export default class Channel extends EventEmitter {
         value: string,
         escapeDigits = '#'
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY PHONETIC %s "%s"',
-            value,
-            escapeDigits
-        ));
+        const response = await this.sendCommand(
+            `SAY PHONETIC ${value} "${escapeDigits}"`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say phonetic');
@@ -969,10 +946,12 @@ export default class Channel extends EventEmitter {
         value: Date | number,
         escapeDigits = '#'
     ): Promise<string> {
-        const response = await this.sendCommand(format('SAY TIME %s "%s"',
-            (typeof value === 'number') ? value : Math.floor(value.getTime() / 1000),
-            escapeDigits
-        ));
+        if (typeof value !== 'number') {
+            value = Math.floor(value.getTime() / 1000);
+        }
+
+        const response = await this.sendCommand(
+            `SAY TIME ${value} "${escapeDigits}"`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not say time');
@@ -988,9 +967,7 @@ export default class Channel extends EventEmitter {
     public async sendImage (
         image: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('SEND IMAGE %s',
-            image
-        ));
+        const response = await this.sendCommand(`SEND IMAGE ${image}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not send image');
@@ -1004,9 +981,7 @@ export default class Channel extends EventEmitter {
     public async sendText (
         text: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('SEND TEXT "%s"',
-            text
-        ));
+        const response = await this.sendCommand(`SEND TEXT "${text}"`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not send text');
@@ -1020,9 +995,7 @@ export default class Channel extends EventEmitter {
     public async setAutoHangup (
         timeout = 60
     ): Promise<void> {
-        const response = await this.sendCommand(format('SET AUTOHANGUP %s',
-            timeout
-        ));
+        const response = await this.sendCommand(`SET AUTOHANGUP ${timeout}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not set auto hangup');
@@ -1039,12 +1012,10 @@ export default class Channel extends EventEmitter {
         callerName?: string
     ): Promise<void> {
         const callerid = (callerName)
-            ? format('"%s"<%s>', callerName, callerNumber)
+            ? `"${callerName}"<${callerNumber}>`
             : callerNumber;
 
-        const response = await this.sendCommand(format('SET CALLERID %s',
-            callerid
-        ));
+        const response = await this.sendCommand(`SET CALLERID ${callerid}`);
 
         if (response.code !== 200 || response.result !== 1) {
             throw new Error('Could not set caller id');
@@ -1058,9 +1029,7 @@ export default class Channel extends EventEmitter {
     public async setContext (
         context: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('SET CONTEXT %s',
-            context
-        ));
+        const response = await this.sendCommand(`SET CONTEXT ${context}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not set context');
@@ -1074,9 +1043,7 @@ export default class Channel extends EventEmitter {
     public async setExtension (
         extension: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('SET EXTENSION %s',
-            extension
-        ));
+        const response = await this.sendCommand(`SET EXTENSION ${extension}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not set extension');
@@ -1092,10 +1059,7 @@ export default class Channel extends EventEmitter {
         status = true,
         musicClass?: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('SET MUSIC %s %s',
-            (status) ? 'ON' : 'OFF',
-            musicClass || ''
-        ));
+        const response = await this.sendCommand(`SET MUSIC ${status ? 'ON' : 'OFF'} ${musicClass ?? ''}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not set priority');
@@ -1109,9 +1073,7 @@ export default class Channel extends EventEmitter {
     public async setPriority (
         priority: number
     ): Promise<void> {
-        const response = await this.sendCommand(format('SET PRIORITY %s',
-            priority
-        ));
+        const response = await this.sendCommand(`SET PRIORITY ${priority}`);
 
         if (response.code !== 200 || response.result !== 0) {
             throw new Error('Could not set priority');
@@ -1127,10 +1089,8 @@ export default class Channel extends EventEmitter {
         key: string,
         value: string
     ): Promise<void> {
-        const response = await this.sendCommand(format('SET VARIABLE %s "%s"',
-            key.toUpperCase(),
-            value
-        ));
+        const response = await this.sendCommand(
+            `SET VARIABLE ${key.toUpperCase()} "${value}"`);
 
         if (response.code !== 200 || response.result !== 1) {
             throw new Error('Could not set variable');
@@ -1141,27 +1101,21 @@ export default class Channel extends EventEmitter {
         grammar: string
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH ACTIVATE GRAMMAR %s',
-            grammar
-        ));
+        return this.sendCommand(`SPEECH ACTIVATE GRAMMAR ${grammar}`);
     }
 
     public async speechCreate (
         engine: string
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH CREATE ENGINE %s',
-            engine
-        ));
+        return this.sendCommand(`SPEECH CREATE ENGINE ${engine}`);
     }
 
     public async speechDeactivateGrammar (
         grammar: string
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH DEACTIVATE GRAMMAR %s',
-            grammar
-        ));
+        return this.sendCommand(`SPEECH DEACTIVATE GRAMMER ${grammar}`);
     }
 
     public async speechDestroy (): Promise<IResponse> {
@@ -1174,10 +1128,7 @@ export default class Channel extends EventEmitter {
         path: string
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH LOAD GRAMMAR %s %s',
-            grammar,
-            path
-        ));
+        return this.sendCommand(`SPEECH LOAD GRAMMER ${grammar} ${path}`);
     }
 
     public async speechRecognize (
@@ -1186,11 +1137,7 @@ export default class Channel extends EventEmitter {
         offset: number
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH RECOGNIZE %s %s %s',
-            soundFile,
-            timeout * 1000,
-            offset
-        ));
+        return this.sendCommand(`SPEECH RECOGNIZE ${soundFile} ${timeout * 1000} ${offset}`);
     }
 
     public async speechSet (
@@ -1198,19 +1145,14 @@ export default class Channel extends EventEmitter {
         value: string
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH SET %s %s',
-            key,
-            value
-        ));
+        return this.sendCommand(`SPEECH SET ${key} ${value}`);
     }
 
     public async speedUnloadGrammar (
         grammar: string
     ): Promise<IResponse> {
         // TODO: Handle the response
-        return this.sendCommand(format('SPEECH UNLOAD GRAMMAR %s',
-            grammar
-        ));
+        return this.sendCommand(`SPEECH UNLOAD GRAMMAR ${grammar}`);
     }
 
     /**
@@ -1224,11 +1166,8 @@ export default class Channel extends EventEmitter {
         escapeDigits = '#',
         offset?: number
     ): Promise<{ digit: string, endpos: number }> {
-        const response = await this.sendCommand(format('STREAM FILE %s "%s" %s',
-            filename,
-            escapeDigits,
-            offset || ''
-        ));
+        const response = await this.sendCommand(
+            `STREAM FILE ${filename} "${escapeDigits}" ${offset ?? ''}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not stream file');
@@ -1253,9 +1192,8 @@ export default class Channel extends EventEmitter {
     public async tddMode (
         status: boolean
     ): Promise<void> {
-        const response = await this.sendCommand(format('TDD MODE %s',
-            (status) ? 'ON' : 'OFF'
-        ));
+        const response = await this.sendCommand(
+            `TDD MODE ${status ? 'ON' : 'OFF'}`);
 
         if (response.code !== 200 || response.result !== 1) {
             throw new Error('Could not set TDD mode');
@@ -1271,10 +1209,7 @@ export default class Channel extends EventEmitter {
         message: string,
         level?: number
     ): Promise<void> {
-        const response = await this.sendCommand(format('VERBOSE "%s" %s',
-            message,
-            level || ''
-        ));
+        const response = await this.sendCommand(`VERBOSE "${message}" ${level ?? ''}`);
 
         if (response.code !== 200 || response.result !== 1) {
             throw new Error('Could not send logging message');
@@ -1288,9 +1223,7 @@ export default class Channel extends EventEmitter {
     public async waitForDigit (
         timeout = 5
     ): Promise<string> {
-        const response = await this.sendCommand(format('WAIT FOR DIGIT %s',
-            timeout * 1000
-        ));
+        const response = await this.sendCommand(`WAIT FOR DIGIT ${timeout * 1000}`);
 
         if (response.code !== 200 || response.result === -1) {
             throw new Error('Could not wait for digit');
@@ -1300,6 +1233,31 @@ export default class Channel extends EventEmitter {
     }
 
     /* Internal Methods */
+
+    /**
+     * Add a SIP header to the outbound call
+     *
+     * @param key
+     * @param value
+     * @constructor
+     */
+    public async SIPAddHeader (key: string, value: string): Promise<void> {
+        await this.exec('SIPAddHeader', `${key}: ${value}`);
+    }
+
+    /**
+     * SIPRemoveHeader() allows you to remove headers which were previously added with SIPAddHeader().
+     * If no parameter is supplied, all previously added headers will be removed.
+     * If a parameter is supplied, only the matching headers will be removed.
+     *
+     * Note: To remove a singular header (not wildcard matched), include a `:` at the end of the key
+     *
+     * @param key
+     * @constructor
+     */
+    public async SIPRemoveHeader (key?: string): Promise<void> {
+        await this.exec('SIPRemoveHeader', key ?? '');
+    }
 
     /**
      * Closes the connection
@@ -1537,7 +1495,7 @@ export default class Channel extends EventEmitter {
 
             this.once('response', handleResponse);
 
-            this.send(format('%s\n', command.trim()))
+            this.send(`${command.trim()}\n`)
                 .catch(error => {
                     this.removeListener('response', handleResponse);
 
