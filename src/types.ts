@@ -36,38 +36,39 @@ export enum ContextState {
  */
 export enum ChannelState {
     DOWN_AVAILABLE = 0,
-    DOWN_RESERVED,
-    OFF_HOOK,
-    DIGITS_DIALED,
-    RINGING,
-    REMOTE_RINGING,
-    UP,
-    BUSY,
+    DOWN_RESERVED = 1,
+    OFF_HOOK = 2,
+    DIGITS_DIALED = 3,
+    RINGING = 4,
+    REMOTE_RINGING = 5,
+    UP = 6,
+    BUSY = 7,
 }
 
 /**
  * Represents the result of a Dial() attempt
  */
 export enum DialStatus {
-    ANSWER,
-    BUSY,
-    NOANSWER,
-    CANCEL,
-    CONGESTION,
-    CHANUNAVAIL,
-    DONTCALL,
-    TORTURE,
-    INVALIDARGS,
+    ANSWER = 0,
+    BUSY = 1,
+    NOANSWER = 2,
+    CANCEL = 3,
+    CONGESTION = 4,
+    CHANUNAVAIL = 5,
+    DONTCALL = 6,
+    TORTURE = 7,
+    INVALIDARGS = 8,
+    UNKNOWN = 9999
 }
 
 /**
  * Represents the playback status
  */
 export enum PlaybackStatus {
-    SUCCESS,
-    USER_STOPPED,
-    REMOTE_STOPPED,
-    ERROR,
+    SUCCESS = 0,
+    USER_STOPPED = 1,
+    REMOTE_STOPPED = 2,
+    ERROR = 3,
 }
 
 /**
