@@ -72,6 +72,21 @@ export enum PlaybackStatus {
 }
 
 /**
+ * Represents the channel driver type
+ */
+export enum ChannelDriver {
+    DHAHDI = 'DHAHDI',
+    SIP = 'SIP',
+    PJSIP = 'PJSIP',
+    IAX2 = 'IAX2',
+    LOCAL = 'Local',
+    SCCP = 'SCCP',
+    OSS = 'OSS',
+    MOTIF = 'Motif',
+    UNKNOWN = ''
+}
+
+/**
  * Represents a response
  */
 export interface IResponse {

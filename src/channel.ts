@@ -20,7 +20,7 @@
 
 import { Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
-import { ChannelState, ContextState, DialStatus, IResponse, PlaybackStatus } from './types';
+import { ChannelDriver, ChannelState, ContextState, DialStatus, IResponse, PlaybackStatus } from './types';
 import ResponseArguments from './response_arguments';
 
 /**
@@ -106,12 +106,12 @@ export default class Channel extends EventEmitter {
         return this._language;
     }
 
-    private _type = '';
+    private _type: ChannelDriver = ChannelDriver.UNKNOWN;
 
     /**
      * The originating channel type (e.g. “SIP” or “ZAP”)
      */
-    public get type (): string {
+    public get type (): ChannelDriver {
         return this._type;
     }
 
@@ -1323,7 +1323,7 @@ export default class Channel extends EventEmitter {
                 this._language = value;
                 break;
             case 'type':
-                this._type = value;
+                this._type = value as ChannelDriver;
                 break;
             case 'uniqueid':
                 this._uniqueid = value;
