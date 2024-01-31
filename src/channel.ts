@@ -643,13 +643,7 @@ export default class Channel extends EventEmitter {
         key: string,
         channel?: string
     ): Promise<string> {
-        const response = await this.sendCommand(`GET FULL VARIABLE ${key.toUpperCase()} ${channel ?? ''}`);
-
-        if (response.code !== 200 || response.result === 0) {
-            throw new Error('Variable not set');
-        }
-
-        return response.arguments.nokey();
+        return this.getFullVariableRaw(key.toUpperCase(), channel);
     }
 
     /**
@@ -687,13 +681,7 @@ export default class Channel extends EventEmitter {
     public async getVariable (
         key: string
     ): Promise<string> {
-        const response = await this.sendCommand(`GET VARIABLE ${key.toUpperCase()}`);
-
-        if (response.code !== 200 || response.result === 0) {
-            throw new Error('Variable not set');
-        }
-
-        return response.arguments.nokey();
+        return this.getVariableRaw(key.toUpperCase());
     }
 
     /**
@@ -1232,16 +1220,139 @@ export default class Channel extends EventEmitter {
         return response.arguments.char('result');
     }
 
+    /**
+     * Adds a SIP header to the outbound call
+     *
+     * @param key
+     * @param value
+     */
+    public async addHeader (key: string, value: string): Promise<void> {
+        if (this.type === ChannelDriver.SIP) {
+            await this.SIPRemoveHeader(key);
+            await this.SIPAddHeader(key, value);
+        } else if (this.type === ChannelDriver.PJSIP) {
+            await this.PJSIPRemoveHeader(key);
+            await this.PJSIPAddHeader(key, value);
+        } else if (this.type === ChannelDriver.IAX2) {
+            await this.IAX2RemoveHeader(key);
+            await this.IAX2AddHeader(key, value);
+        }
+    }
+
+    /**
+     * Allows you to remove headers which were previously added with PJSIPAddHeader().
+     * If no parameter is supplied, all previously added headers will be removed.
+     * If a parameter is supplied, only the matching headers will be removed
+     *
+     * @param key
+     * @param wildcard
+     */
+    public async removeHeader (key?: string, wildcard = false): Promise<void> {
+        if (this.type === ChannelDriver.SIP) {
+            await this.SIPRemoveHeader(key, wildcard);
+        } else if (this.type === ChannelDriver.PJSIP) {
+            await this.PJSIPRemoveHeader(key, wildcard);
+        } else if (this.type === ChannelDriver.IAX2) {
+            if (key) {
+                await this.IAX2RemoveHeader(key);
+            }
+        }
+    }
+
+    /**
+     * Evaluates a channel expression
+     * Understands complex variable names and builtin variables, unlike GET VARIABLE.
+     * @param key
+     * @param channel
+     */
+    public async getFullVariableRaw (
+        key: string,
+        channel?: string
+    ): Promise<string> {
+        const response = await this.sendCommand(`GET FULL VARIABLE ${key} ${channel ?? ''}`);
+
+        if (response.code !== 200 || response.result === 0) {
+            throw new Error(`Variable not set: ${key} ${channel ? `on ${channel}` : ''}`);
+        }
+
+        return response.arguments.nokey();
+    }
+
+    /**
+     * Gets a channel variable
+     *
+     * @param key
+     * @private
+     */
+    public async getVariableRaw (
+        key: string
+    ): Promise<string> {
+        const response = await this.sendCommand(`GET VARIABLE ${key}`);
+
+        if (response.code !== 200 || response.result === 0) {
+            throw new Error(`Variable not set: ${key}`);
+        }
+
+        return response.arguments.nokey();
+    }
+
     /* Internal Methods */
+
+    /**
+     * Adds an IAX2 'header' to the outbound call
+     *
+     * @param key
+     * @param value
+     * @constructor
+     * @private
+     */
+    private async IAX2AddHeader (key: string, value: string): Promise<void> {
+        await this.exec('Set', `CHANNEL(iax2)=${key}=${value}`);
+    }
+
+    /**
+     * Removes an IAX2 'header' from the outbound call
+     *
+     * @param key
+     * @constructor
+     * @private
+     */
+    private async IAX2RemoveHeader (key: string): Promise<void> {
+        return this.IAX2AddHeader(key, '');
+    }
+
+    /**
+     * Adds a SIP header to the outbound call
+     *
+     * @param key
+     * @param value
+     * @constructor
+     * @private
+     */
+    private async PJSIPAddHeader (key: string, value: string): Promise<void> {
+        await this.exec('Set', `PJSIP_HEADER(add,${key})=${value}`);
+    }
+
+    /**
+     * Allows you to remove headers which were previously added with PJSIPAddHeader().
+     * If no parameter is supplied, all previously added headers will be removed.
+     * If a parameter is supplied, only the matching headers will be removed
+     *
+     * @param key
+     * @param wildcard
+     * @private
+     */
+    private async PJSIPRemoveHeader (key?: string, wildcard = false): Promise<void> {
+        await this.exec('Set', `PJSIP_HEADER(remove,${key || '*'}${key && wildcard ? '*' : ''})=`);
+    }
 
     /**
      * Add a SIP header to the outbound call
      *
      * @param key
      * @param value
-     * @constructor
      */
-    public async SIPAddHeader (key: string, value: string): Promise<void> {
+    private async SIPAddHeader (key: string, value: string): Promise<void> {
         await this.exec('SIPAddHeader', `${key}: ${value}`);
     }
 
@@ -1250,13 +1361,14 @@ export default class Channel extends EventEmitter {
      * If no parameter is supplied, all previously added headers will be removed.
      * If a parameter is supplied, only the matching headers will be removed.
      *
-     * Note: To remove a singular header (not wildcard matched), include a `:` at the end of the key
-     *
      * @param key
+     * @param wildcard
      * @constructor
      */
-    public async SIPRemoveHeader (key?: string): Promise<void> {
-        await this.exec('SIPRemoveHeader', key ?? '');
+    private async SIPRemoveHeader (key?: string, wildcard = false): Promise<void> {
+        const args = `${key || ''}${key && !wildcard ? ':' : ''}`;
+
+        await this.exec('SIPRemoveHeader', args);
     }
 
     /**
