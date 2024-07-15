@@ -1,6 +1,6 @@
 {
   "name": "@gibme/asterisk-gateway-interface",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Asterisk Gateway Interface Server",
   "main": "dist/asterisk-gateway-interface.js",
   "types": "dist/asterisk-gateway-interface.d.ts",
@@ -38,11 +38,11 @@
     "email": "brandonlehmann@gmail.com"
   },
   "dependencies": {
-    "@gibme/tcp-server": "^1.0.6",
-    "@gibme/timer": "^1.0.6",
-    "@types/uuid": "^9.0.8",
-    "dotenv": "^16.4.1",
-    "uuid": "^9.0.1"
+    "@gibme/tcp-server": "^1.0.10",
+    "@gibme/timer": "^1.0.10",
+    "@types/uuid": "^10.0.0",
+    "dotenv": "^16.4.5",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",

@@ -19,3 +19,21 @@
 // SOFTWARE.
 
 // TODO: testing requires an active Asterisk server to make calls w/o shipping a "fake" server
+
+import AsteriskGatewayInterface from '../src/asterisk-gateway-interface';
+
+(async () => {
+    const server = new AsteriskGatewayInterface();
+
+    server.on('channel', async (channel) => {
+        console.log(channel.channel, channel.type);
+
+        await channel.addHeader('X-Touched-Call', 'Test Header');
+        await channel.addHeader('X-Touched-Call', 'Test Header2');
+        await channel.addHeader('X-Touched-Call-2', 'Test Header 2+');
+
+        await channel.dial('Local/15678675309@from-internal');
+    });
+
+    await server.start();
+})();
