@@ -41,15 +41,15 @@
   resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.57.0.tgz#a5417ae8427873f1dd08b70b3574b453e67b5f7f"
   integrity sha512-Ys+3g2TaW7gADOJzPt83SJtCDhMjndcDMFVQ/Tj9iA1BfJzFKD9mAUXT3OenpuPHbI6P/myECxRJrofUsDx/5g==
 
-"@gibme/tcp-server@^1.0.10":
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/@gibme/tcp-server/-/tcp-server-1.0.10.tgz#fe517cfc32127882627e716cbd7f44e0c90535a9"
-  integrity sha512-DZL9sAR/OuHqReQ1USAMoudeaoT7CCHJ7SSdm2MaWgISRqylnSvp87EKwDtNBRnzTHw/V++aM3gTBmx0SbQvOw==
+"@gibme/tcp-server@^1.0.11":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@gibme/tcp-server/-/tcp-server-1.0.11.tgz#e2fcd25956487e443efdb3f11fe7aafe3308cfb3"
+  integrity sha512-kDTu176WYbG5Dq4RpWg5yig/NflkyzbmZUc2zqot9GMne2tpPr4XAFBupCnJnpx4w8P5EpuYPu0oeD+lIxmvkA==
 
-"@gibme/timer@^1.0.10":
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/@gibme/timer/-/timer-1.0.10.tgz#f6ff2a5df96b538b1a287fdaf5b6d9db624b33cb"
-  integrity sha512-aFdchYrog/1xgZ91XRRIQ3Irj+0o24lqog/xzUwTDpcjnZRuClSD3sMYjH0zg3oByuEXfrkNFPSuAaoMDCmhCw==
+"@gibme/timer@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@gibme/timer/-/timer-1.0.13.tgz#ef450b7c54517a834bc267207e5e81e7992741c1"
+  integrity sha512-Basv9F8HsyZ39fGYtkPWd8LgA1Vj6D3wb+OGc8q1/TSD5putsqD1olT+TxwSyxOGImSqwDm1hyOwM9sRKVg8qg==
 
 "@humanwhocodes/config-array@^0.11.14":
   version "0.11.14"
@@ -630,10 +630,10 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-dotenv@^16.4.5:
-  version "16.4.5"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.5.tgz#cdd3b3b604cb327e286b4762e13502f717cb099f"
-  integrity sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==
+dotenv@^16.4.7:
+  version "16.4.7"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.7.tgz#0e20c5b82950140aa99be360a8a5f52335f53c26"
+  integrity sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==
 
 emoji-regex@^8.0.0:
   version "8.0.0"
@@ -2118,10 +2118,10 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-uuid@^10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-10.0.0.tgz#5a95aa454e6e002725c79055fd42aaba30ca6294"
-  integrity sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==
+uuid@^11.0.3:
+  version "11.0.3"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.0.3.tgz#248451cac9d1a4a4128033e765d137e2b2c49a3d"
+  integrity sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
