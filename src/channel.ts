@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2016-2025, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -451,6 +451,10 @@ export default class Channel extends EventEmitter {
         status: DialStatus;
         dialed_time: number;
         answered_time: number;
+        peer_name: string;
+        peer_number: string;
+        ring_time: number;
+        progress_time: number;
     }> {
         options.timeout ??= 30;
         options.params ??= '';
@@ -465,6 +469,14 @@ export default class Channel extends EventEmitter {
         const dialed_time = parseInt(await this.getVariable('DIALEDTIME') || '0') || 0;
 
         const answered_time = parseInt(await this.getVariable('ANSWEREDTIME') || '0') || 0;
+
+        const peer_name = await this.getVariable('DIALEDPEERNAME');
+
+        const peer_number = await this.getVariable('DIALEDPEERNUMBER');
+
+        const ring_time = parseInt(await this.getVariable('RINGTIME') || '0') || 0;
+
+        const progress_time = parseInt(await this.getVariable('PROGRESSTIME') || '0') || 0;
 
         if (options.hangupOnComplete) {
             try {
@@ -508,7 +520,11 @@ export default class Channel extends EventEmitter {
         return {
             status,
             dialed_time,
-            answered_time
+            answered_time,
+            peer_name,
+            peer_number,
+            ring_time,
+            progress_time
         };
     }
 
