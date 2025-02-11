@@ -654,12 +654,14 @@ export default class Channel extends EventEmitter {
      * Understands complex variable names and builtin variables, unlike GET VARIABLE.
      * @param key
      * @param channel
+     * @param keyToUpper
      */
     public async getFullVariable (
         key: string,
-        channel?: string
+        channel?: string,
+        keyToUpper = true
     ): Promise<string> {
-        return this.getFullVariableRaw(key.toUpperCase(), channel);
+        return this.getFullVariableRaw(keyToUpper ? key.toUpperCase() : key, channel);
     }
 
     /**
@@ -693,11 +695,13 @@ export default class Channel extends EventEmitter {
     /**
      * Gets a channel variable.
      * @param key
+     * @param keyToUpper whether to force the key to uppercase
      */
     public async getVariable (
-        key: string
+        key: string,
+        keyToUpper = true
     ): Promise<string> {
-        return this.getVariableRaw(key.toUpperCase());
+        return this.getVariableRaw(keyToUpper ? key.toUpperCase() : key);
     }
 
     /**
@@ -722,6 +726,34 @@ export default class Channel extends EventEmitter {
     }
 
     /**
+     * Indicates busy to the calling channel
+     *
+     * @param timeout if specified, the calling channel will be hung up after the specified number of seconds.
+     * Otherwise, this application will wait until the calling channel hangs up
+     */
+    public async busy (timeout?: number): Promise<number> {
+        if (timeout) {
+            return this.exec('Busy', timeout.toString());
+        } else {
+            return this.exec('Busy');
+        }
+    }
+
+    /**
+     * Indicates congestion to the calling channel
+     *
+     * @param timeout if specified, the calling channel will be hung up after the specified number of seconds.
+     * Otherwise, this application will wait until the calling channel hangs up
+     */
+    public async congestion (timeout?: number): Promise<number> {
+        if (timeout) {
+            return this.exec('Congestion', timeout.toString());
+        } else {
+            return this.exec('Congestion');
+        }
+    }
+
+    /**
      * Hangs up the specified channel. If no channel name is given, hangs up the current channel
      * @param channel
      */
@@ -733,6 +765,20 @@ export default class Channel extends EventEmitter {
         if (response.code !== 200 || response.result !== 1) {
             throw new Error('Could not hang up call');
         }
+    }
+
+    /**
+     * Requests that in-band progress information be provided to the calling channel
+     */
+    public async progress (): Promise<number> {
+        return this.exec('Progress');
+    }
+
+    /**
+     * Requests that the channel indicate a ringing tone to the user
+     */
+    public async ringing (): Promise<number> {
+        return this.exec('Ringing');
     }
 
     /**
