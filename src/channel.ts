@@ -58,6 +58,15 @@ export default class Channel extends EventEmitter {
         });
     }
 
+    private _outgoingHeaders: Record<string, string> = {};
+
+    /**
+     * Headers that have been set for **outgoing** requests
+     */
+    public get outgoingHeaders (): Record<string, string> {
+        return this._outgoingHeaders;
+    }
+
     private _network = '';
 
     /**
@@ -71,7 +80,7 @@ export default class Channel extends EventEmitter {
 
     /**
      * The network path included in the AGI request
-     * ie. agi://127.0.0.1:3000/test
+     * e.g. agi://127.0.0.1:3000/test
      * This value would return 'test'
      */
     public get network_script (): string {
@@ -1283,42 +1292,70 @@ export default class Channel extends EventEmitter {
     }
 
     /**
-     * Adds a SIP header to the outbound call
+     * Attempts to retrieve the inbound header specified from the channel
+     *
+     * Note: This method can only read headers on the **incoming** request. It can not
+     * read headers set on an **outbound** SIP request.
+     *
+     * @param key
+     */
+    public async getHeader (key: string): Promise<string | undefined> {
+        try {
+            if (this.type === ChannelDriver.SIP) {
+                return await this.getVariable(`SIP_HEADER(${key})`, false);
+            } else if (this.type === ChannelDriver.PJSIP) {
+                return await this.getVariable(`PJSIP_HEADER(read,${key})`, false);
+            } else if (this.type === ChannelDriver.IAX2) {
+                // TODO: Properly handle this result as it may contain more than one header
+                return undefined;
+            }
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
+     * Adds a header to the **outgoing** request
      *
      * @param key
      * @param value
      */
     public async addHeader (key: string, value: string): Promise<void> {
+        await this.removeHeader(key);
+
         if (this.type === ChannelDriver.SIP) {
-            await this.SIPRemoveHeader(key);
             await this.SIPAddHeader(key, value);
         } else if (this.type === ChannelDriver.PJSIP) {
-            await this.PJSIPRemoveHeader(key);
             await this.PJSIPAddHeader(key, value);
         } else if (this.type === ChannelDriver.IAX2) {
-            await this.IAX2RemoveHeader(key);
             await this.IAX2AddHeader(key, value);
         }
+
+        this._outgoingHeaders[key] = value;
     }
 
     /**
-     * Allows you to remove headers which were previously added with PJSIPAddHeader().
-     * If no parameter is supplied, all previously added headers will be removed.
-     * If a parameter is supplied, only the matching headers will be removed
+     * Allows you to remove a header from the **outgoing** request as long as you
+     * have added it via the `addHeader()` method.
      *
      * @param key
-     * @param wildcard
      */
-    public async removeHeader (key?: string, wildcard = false): Promise<void> {
+    public async removeHeader (key: string): Promise<void> {
+        if (!this.outgoingHeaders[key]) {
+            return;
+        }
+
         if (this.type === ChannelDriver.SIP) {
-            await this.SIPRemoveHeader(key, wildcard);
+            await this.SIPRemoveHeader(key);
         } else if (this.type === ChannelDriver.PJSIP) {
-            await this.PJSIPRemoveHeader(key, wildcard);
+            await this.PJSIPRemoveHeader(key);
         } else if (this.type === ChannelDriver.IAX2) {
             if (key) {
                 await this.IAX2RemoveHeader(key);
             }
         }
+
+        delete this._outgoingHeaders[key];
     }
 
     /**
@@ -1397,15 +1434,12 @@ export default class Channel extends EventEmitter {
 
     /**
      * Allows you to remove headers which were previously added with PJSIPAddHeader().
-     * If no parameter is supplied, all previously added headers will be removed.
-     * If a parameter is supplied, only the matching headers will be removed
      *
      * @param key
-     * @param wildcard
      * @private
      */
-    private async PJSIPRemoveHeader (key?: string, wildcard = false): Promise<void> {
-        await this.exec('Set', `PJSIP_HEADER(remove,${key || '*'}${key && wildcard ? '*' : ''})=`);
+    private async PJSIPRemoveHeader (key: string): Promise<void> {
+        await this.exec('Set', `PJSIP_HEADER(remove,${key})=`);
     }
 
     /**
@@ -1420,17 +1454,12 @@ export default class Channel extends EventEmitter {
 
     /**
      * SIPRemoveHeader() allows you to remove headers which were previously added with SIPAddHeader().
-     * If no parameter is supplied, all previously added headers will be removed.
-     * If a parameter is supplied, only the matching headers will be removed.
      *
      * @param key
-     * @param wildcard
      * @constructor
      */
-    private async SIPRemoveHeader (key?: string, wildcard = false): Promise<void> {
-        const args = `${key || ''}${key && !wildcard ? ':' : ''}`;
-
-        await this.exec('SIPRemoveHeader', args);
+    private async SIPRemoveHeader (key: string): Promise<void> {
+        await this.exec('SIPRemoveHeader', `${key}:`);
     }
 
     /**
