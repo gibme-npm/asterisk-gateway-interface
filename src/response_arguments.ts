@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2024, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2016-2025, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,16 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export interface IResponseArguments {
-    key: string;
-    value: string | number | boolean;
-}
-
 /**
  * Represents a set of AGI response arguments
  */
-export default class ResponseArguments {
-    private m_args: IResponseArguments[] = [];
+export class ResponseArguments {
+    private m_args: {key: string; value: string | number | boolean}[] = [];
 
     /**
      * Adds a new argument to the set

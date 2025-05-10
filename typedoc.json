@@ -3,7 +3,7 @@
   "excludeExternals": true,
   "excludePrivate": true,
   "entryPoints": [
-    "./src/asterisk-gateway-interface.ts"
+    "./src/index.ts"
   ],
   "disableSources": true,
   "hideGenerator": true,

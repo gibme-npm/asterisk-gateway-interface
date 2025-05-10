@@ -18,15 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Socket } from '@gibme/tcp-server';
 import { EventEmitter } from 'events';
-import { ChannelDriver, ChannelState, ContextState, DialStatus, IResponse, PlaybackStatus } from './types';
-import ResponseArguments from './response_arguments';
+import type { Socket } from '@gibme/tcp-server';
+import { ResponseArguments } from './response_arguments';
+export { ResponseArguments };
+
+/**
+ * The current context state
+ */
+export enum ContextState {
+    INIT = 0,
+    WAITING = 2
+}
+
+/**
+ * Represents the channel driver type
+ */
+export enum Driver {
+    DHAHDI = 'DHAHDI',
+    SIP = 'SIP',
+    PJSIP = 'PJSIP',
+    IAX2 = 'IAX2',
+    LOCAL = 'Local',
+    SCCP = 'SCCP',
+    OSS = 'OSS',
+    MOTIF = 'Motif',
+    UNKNOWN = ''
+}
 
 /**
  * Represents an AGI Channel
  */
-export default class Channel extends EventEmitter {
+export class Channel extends EventEmitter {
     private readonly _connection: Socket;
     private _state: ContextState;
     private _message = '';
@@ -115,12 +138,12 @@ export default class Channel extends EventEmitter {
         return this._language;
     }
 
-    private _type: ChannelDriver = ChannelDriver.UNKNOWN;
+    private _type: Driver = Driver.UNKNOWN;
 
     /**
      * The originating channel type (e.g. “SIP” or “ZAP”)
      */
-    public get type (): ChannelDriver {
+    public get type (): Driver {
         return this._type;
     }
 
@@ -338,7 +361,7 @@ export default class Channel extends EventEmitter {
      * @param event
      * @param listener
      */
-    public on(event: 'response', listener: (response: IResponse) => void): this;
+    public on(event: 'response', listener: (response: Channel.Response) => void): this;
 
     /**
      * Event that is emitted when data is sent to the Asterisk server
@@ -382,7 +405,7 @@ export default class Channel extends EventEmitter {
      */
     public async channelStatus (
         channel?: string
-    ): Promise<ChannelState> {
+    ): Promise<Channel.State> {
         const response = await this.sendCommand(`CHANNEL STATUS ${channel ?? ''}`);
 
         if (response.code !== 200 || response.result === -1) {
@@ -408,7 +431,7 @@ export default class Channel extends EventEmitter {
         fastForwardCharacter?: string,
         rewindCharacter?: string,
         pauseCharacter?: string
-    ): Promise<{ digit: string, playbackStatus: PlaybackStatus, playbackOffset: number }> {
+    ): Promise<{ digit: string, playbackStatus: Channel.Playback.Status, playbackOffset: number }> {
         const response = await this.sendCommand(
             `CONTROL STREAM FILE ${filename} ` +
             `"${escapeDigits}" ${skipms ?? ''} ${fastForwardCharacter ?? ''} ` +
@@ -422,17 +445,17 @@ export default class Channel extends EventEmitter {
 
         const playbackOffset = await this.getVariable('CPLAYBACKOFFSET ');
 
-        let status: PlaybackStatus = PlaybackStatus.ERROR;
+        let status: Channel.Playback.Status = Channel.Playback.Status.ERROR;
 
         switch (playbackStatus.toUpperCase()) {
             case 'SUCCESS':
-                status = PlaybackStatus.SUCCESS;
+                status = Channel.Playback.Status.SUCCESS;
                 break;
             case 'USERSTOPPED':
-                status = PlaybackStatus.USER_STOPPED;
+                status = Channel.Playback.Status.USER_STOPPED;
                 break;
             case 'REMOTESTOPPED':
-                status = PlaybackStatus.REMOTE_STOPPED;
+                status = Channel.Playback.Status.REMOTE_STOPPED;
                 break;
         }
 
@@ -457,7 +480,7 @@ export default class Channel extends EventEmitter {
             hangupOnComplete: boolean;
         }> = {}
     ): Promise<{
-        status: DialStatus;
+        status: Channel.Dial.Status;
         dialed_time: number;
         answered_time: number;
         peer_name: string;
@@ -494,35 +517,35 @@ export default class Channel extends EventEmitter {
             }
         }
 
-        let status: DialStatus = DialStatus.UNKNOWN;
+        let status: Channel.Dial.Status = Channel.Dial.Status.UNKNOWN;
 
         switch (dialstatus.toUpperCase()) {
             case 'ANSWER':
-                status = DialStatus.ANSWER;
+                status = Channel.Dial.Status.ANSWER;
                 break;
             case 'BUSY':
-                status = DialStatus.BUSY;
+                status = Channel.Dial.Status.BUSY;
                 break;
             case 'NOANSWER':
-                status = DialStatus.NOANSWER;
+                status = Channel.Dial.Status.NOANSWER;
                 break;
             case 'CANCEL':
-                status = DialStatus.CANCEL;
+                status = Channel.Dial.Status.CANCEL;
                 break;
             case 'CONGESTION':
-                status = DialStatus.CONGESTION;
+                status = Channel.Dial.Status.CONGESTION;
                 break;
             case 'CHANUNAVAIL':
-                status = DialStatus.CHANUNAVAIL;
+                status = Channel.Dial.Status.CHANUNAVAIL;
                 break;
             case 'DONTCALL':
-                status = DialStatus.DONTCALL;
+                status = Channel.Dial.Status.DONTCALL;
                 break;
             case 'TORTURE':
-                status = DialStatus.TORTURE;
+                status = Channel.Dial.Status.TORTURE;
                 break;
             case 'INVALIDARGS':
-                status = DialStatus.INVALIDARGS;
+                status = Channel.Dial.Status.INVALIDARGS;
                 break;
         }
 
@@ -611,7 +634,7 @@ export default class Channel extends EventEmitter {
 
     /**
      * Executes application with given options
-     * @param application.
+     * @param application
      * @param args
      */
     public async exec (
@@ -1158,26 +1181,26 @@ export default class Channel extends EventEmitter {
 
     public async speechActivateGrammar (
         grammar: string
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH ACTIVATE GRAMMAR ${grammar}`);
     }
 
     public async speechCreate (
         engine: string
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH CREATE ENGINE ${engine}`);
     }
 
     public async speechDeactivateGrammar (
         grammar: string
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH DEACTIVATE GRAMMER ${grammar}`);
     }
 
-    public async speechDestroy (): Promise<IResponse> {
+    public async speechDestroy (): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand('SPEECH DESTROY');
     }
@@ -1185,7 +1208,7 @@ export default class Channel extends EventEmitter {
     public async speechLoadGrammar (
         grammar: string,
         path: string
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH LOAD GRAMMER ${grammar} ${path}`);
     }
@@ -1194,7 +1217,7 @@ export default class Channel extends EventEmitter {
         soundFile: string,
         timeout = 5,
         offset: number
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH RECOGNIZE ${soundFile} ${timeout * 1000} ${offset}`);
     }
@@ -1202,14 +1225,14 @@ export default class Channel extends EventEmitter {
     public async speechSet (
         key: string,
         value: string
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH SET ${key} ${value}`);
     }
 
     public async speedUnloadGrammar (
         grammar: string
-    ): Promise<IResponse> {
+    ): Promise<Channel.Response> {
         // TODO: Handle the response
         return this.sendCommand(`SPEECH UNLOAD GRAMMAR ${grammar}`);
     }
@@ -1301,11 +1324,11 @@ export default class Channel extends EventEmitter {
      */
     public async getHeader (key: string): Promise<string | undefined> {
         try {
-            if (this.type === ChannelDriver.SIP) {
+            if (this.type === Driver.SIP) {
                 return await this.getVariable(`SIP_HEADER(${key})`, false);
-            } else if (this.type === ChannelDriver.PJSIP) {
+            } else if (this.type === Driver.PJSIP) {
                 return await this.getVariable(`PJSIP_HEADER(read,${key})`, false);
-            } else if (this.type === ChannelDriver.IAX2) {
+            } else if (this.type === Driver.IAX2) {
                 // TODO: Properly handle this result as it may contain more than one header
                 return undefined;
             }
@@ -1323,11 +1346,11 @@ export default class Channel extends EventEmitter {
     public async addHeader (key: string, value: string): Promise<void> {
         await this.removeHeader(key);
 
-        if (this.type === ChannelDriver.SIP) {
+        if (this.type === Driver.SIP) {
             await this.SIPAddHeader(key, value);
-        } else if (this.type === ChannelDriver.PJSIP) {
+        } else if (this.type === Driver.PJSIP) {
             await this.PJSIPAddHeader(key, value);
-        } else if (this.type === ChannelDriver.IAX2) {
+        } else if (this.type === Driver.IAX2) {
             await this.IAX2AddHeader(key, value);
         }
 
@@ -1345,11 +1368,11 @@ export default class Channel extends EventEmitter {
             return;
         }
 
-        if (this.type === ChannelDriver.SIP) {
+        if (this.type === Driver.SIP) {
             await this.SIPRemoveHeader(key);
-        } else if (this.type === ChannelDriver.PJSIP) {
+        } else if (this.type === Driver.PJSIP) {
             await this.PJSIPRemoveHeader(key);
-        } else if (this.type === ChannelDriver.IAX2) {
+        } else if (this.type === Driver.IAX2) {
             if (key) {
                 await this.IAX2RemoveHeader(key);
             }
@@ -1402,7 +1425,6 @@ export default class Channel extends EventEmitter {
      *
      * @param key
      * @param value
-     * @constructor
      * @private
      */
     private async IAX2AddHeader (key: string, value: string): Promise<void> {
@@ -1413,7 +1435,6 @@ export default class Channel extends EventEmitter {
      * Removes an IAX2 'header' from the outbound call
      *
      * @param key
-     * @constructor
      * @private
      */
     private async IAX2RemoveHeader (key: string): Promise<void> {
@@ -1425,7 +1446,6 @@ export default class Channel extends EventEmitter {
      *
      * @param key
      * @param value
-     * @constructor
      * @private
      */
     private async PJSIPAddHeader (key: string, value: string): Promise<void> {
@@ -1456,7 +1476,6 @@ export default class Channel extends EventEmitter {
      * SIPRemoveHeader() allows you to remove headers which were previously added with SIPAddHeader().
      *
      * @param key
-     * @constructor
      */
     private async SIPRemoveHeader (key: string): Promise<void> {
         await this.exec('SIPRemoveHeader', `${key}:`);
@@ -1526,7 +1545,7 @@ export default class Channel extends EventEmitter {
                 this._language = value;
                 break;
             case 'type':
-                this._type = value as ChannelDriver;
+                this._type = value as Driver;
                 break;
             case 'uniqueid':
                 this._uniqueid = value;
@@ -1653,7 +1672,7 @@ export default class Channel extends EventEmitter {
             }
         }
 
-        const response: IResponse = {
+        const response: Channel.Response = {
             code,
             result: args.number('result'),
             arguments: args
@@ -1688,9 +1707,9 @@ export default class Channel extends EventEmitter {
      * @param command
      * @private
      */
-    private async sendCommand (command: string): Promise<IResponse> {
+    private async sendCommand (command: string): Promise<Channel.Response> {
         return new Promise((resolve, reject) => {
-            const handleResponse = (response: IResponse) => {
+            const handleResponse = (response: Channel.Response) => {
                 this.removeListener('response', handleResponse);
 
                 return resolve(response);
@@ -1707,3 +1726,60 @@ export default class Channel extends EventEmitter {
         });
     }
 }
+
+export namespace Channel {
+    /**
+     * The Current Channel State
+     */
+    export enum State {
+        DOWN_AVAILABLE = 0,
+        DOWN_RESERVED = 1,
+        OFF_HOOK = 2,
+        DIGITS_DIALED = 3,
+        RINGING = 4,
+        REMOTE_RINGING = 5,
+        UP = 6,
+        BUSY = 7,
+    }
+
+    export namespace Dial {
+        /**
+         * Represents the result of a Dial() attempt
+         */
+        export enum Status {
+            ANSWER = 0,
+            BUSY = 1,
+            NOANSWER = 2,
+            CANCEL = 3,
+            CONGESTION = 4,
+            CHANUNAVAIL = 5,
+            DONTCALL = 6,
+            TORTURE = 7,
+            INVALIDARGS = 8,
+            UNKNOWN = 9999
+        }
+    }
+
+    export namespace Playback {
+        /**
+         * Represents the playback status
+         */
+        export enum Status {
+            SUCCESS = 0,
+            USER_STOPPED = 1,
+            REMOTE_STOPPED = 2,
+            ERROR = 3,
+        }
+    }
+
+    /**
+     * Responses a response to a channel command
+     */
+    export type Response = {
+        code: number;
+        result: number;
+        arguments: ResponseArguments;
+    }
+}
+
+export default Channel;
