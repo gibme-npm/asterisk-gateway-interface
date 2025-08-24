@@ -1,6 +1,6 @@
 {
   "name": "@gibme/asterisk-gateway-interface",
-  "version": "5.0.1",
+  "version": "20.0.0",
   "description": "Asterisk Gateway Interface Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,7 +30,7 @@
   },
   "homepage": "https://gibme-npm.github.io/asterisk-gateway-interface/",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "engineStrict": true,
   "author": {
@@ -38,14 +38,14 @@
     "email": "brandonlehmann@gmail.com"
   },
   "dependencies": {
-    "@gibme/tcp-server": "^1.0.14",
-    "@gibme/timer": "^1.0.14",
-    "dotenv": "^16.5.0",
+    "@gibme/tcp-server": "^20.0.0",
+    "@gibme/timer": "^20.0.0",
+    "dotenv": "^17.2.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^22.15.17",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
     "eslint": "^8.56.0",
@@ -54,9 +54,9 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
-    "mocha": "^10.2.0",
+    "mocha": "^11.7.1",
     "ts-node": "^10.9.2",
     "typedoc": "^0.28.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.2"
   }
 }
