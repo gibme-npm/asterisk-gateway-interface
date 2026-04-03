@@ -1,6 +1,6 @@
 {
   "name": "@gibme/asterisk-gateway-interface",
-  "version": "20.0.1",
+  "version": "22.0.0",
   "description": "Asterisk Gateway Interface Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,10 +12,10 @@
     "build": "yarn build:typescript",
     "build:docs": "./node_modules/.bin/typedoc",
     "build:typescript": "./node_modules/.bin/tsc",
-    "test": "yarn test:style && yarn test:typecheck && yarn test:mocha",
+    "test": "yarn test:style && yarn test:typecheck && yarn test:units",
     "test:typecheck": "./node_modules/.bin/tsc --noEmit",
     "test:style": "yarn style",
-    "test:mocha": "./node_modules/.bin/mocha --exit --timeout 30000 --require ts-node/register test/test.ts",
+    "test:units": "node --import tsx --test --test-timeout 120000 test/test.ts",
     "style": "./node_modules/.bin/eslint src/**/*.ts test/**/*.ts",
     "fix-style": "./node_modules/.bin/eslint --fix src/**/*.ts test/**/*.ts",
     "fix:style": "yarn fix-style",
@@ -30,7 +30,7 @@
   },
   "homepage": "https://gibme-npm.github.io/asterisk-gateway-interface/",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "engineStrict": true,
   "author": {
@@ -38,27 +38,25 @@
     "email": "brandonlehmann@gmail.com"
   },
   "dependencies": {
-    "@gibme/tcp-server": "^20.0.1",
-    "@gibme/timer": "^20.0.1",
+    "@gibme/tcp-server": "^22.0.0",
+    "@gibme/timer": "^22.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
-    "@eslint/js": "^9.39.1",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^24.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.48.1",
-    "@typescript-eslint/parser": "^8.48.1",
-    "eslint": "^9.39.1",
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^10.1.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-n": "^17.23.1",
+    "eslint-plugin-n": "^17.24.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^7.2.1",
-    "globals": "^16.5.0",
-    "mocha": "^11.7.5",
-    "ts-node": "^10.9.2",
-    "typedoc": "^0.28.15",
-    "typescript": "^5.9.3"
+    "globals": "^17.4.0",
+    "tsx": "^4.19.0",
+    "typedoc": "^0.28.18",
+    "typescript": "^6.0.2"
   }
 }

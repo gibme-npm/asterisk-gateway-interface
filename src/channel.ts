@@ -1496,7 +1496,7 @@ export class Channel extends EventEmitter {
      * @param data
      * @private
      */
-    private read (data: Buffer): void {
+    private read (data: Buffer | string): void {
         if (data.length === 0) {
             return;
         }
