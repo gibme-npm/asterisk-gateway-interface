@@ -1,6 +1,6 @@
 {
   "name": "@gibme/asterisk-gateway-interface",
-  "version": "22.0.0",
+  "version": "22.0.1",
   "description": "Asterisk Gateway Interface Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -40,7 +40,7 @@
   "dependencies": {
     "@gibme/tcp-server": "^22.0.0",
     "@gibme/timer": "^22.0.0",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
