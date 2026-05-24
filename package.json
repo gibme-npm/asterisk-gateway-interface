@@ -1,6 +1,6 @@
 {
   "name": "@gibme/asterisk-gateway-interface",
-  "version": "22.0.1",
+  "version": "22.0.2",
   "description": "Asterisk Gateway Interface Server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
